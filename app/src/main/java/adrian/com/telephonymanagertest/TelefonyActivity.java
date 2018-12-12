@@ -2,14 +2,11 @@ package adrian.com.telephonymanagertest;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,6 +16,7 @@ import android.telephony.CellLocation;
 import android.telephony.SignalStrength;
 import android.telephony.cdma.CdmaCellLocation;
 import android.telephony.gsm.GsmCellLocation;
+import android.widget.Button;
 import android.widget.TextView;
 
 import butterknife.BindView;
@@ -29,12 +27,17 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
     TextView cellTv;
     @BindView(R.id.signal_strenght)
     TextView signalTv;
+    @BindView(R.id.button)
+    Button button;
     @BindView(R.id.service_state)
     TextView serviceTv;
 
     private static int REQUEST_ACCESS_FINE_LOCATION = 101;
     private static int REQUEST_ACCESS_COARSE_LOCATION = 102;
     private static int REQUEST_READ_PHONE_STATE = 103;
+    private static int REQUEST_WRITE_EXTERNAL = 104;
+    private static int REQUEST_WIFI_STATE = 105;
+    private static int REQUEST_CHANGE_WIFI_STATE = 105;
 
     Intent serviceIntent;
 
@@ -65,6 +68,11 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
         intentFilter.addAction(LOCATION_EVENT);
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, intentFilter);
+
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(TelefonyActivity.this, WifiActivity.class);
+            startActivity(intent);
+        });
         super.onResume();
     }
 
@@ -121,6 +129,28 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
                     new String[]{Manifest.permission.READ_PHONE_STATE},
                     REQUEST_READ_PHONE_STATE);
         }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissionGranted = false;
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_EXTERNAL);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_WIFI_STATE) != PackageManager.PERMISSION_GRANTED) {
+            permissionGranted = false;
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_WIFI_STATE},
+                    REQUEST_WIFI_STATE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CHANGE_WIFI_STATE) != PackageManager.PERMISSION_GRANTED) {
+            permissionGranted = false;
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CHANGE_WIFI_STATE},
+                    REQUEST_CHANGE_WIFI_STATE);
+        }
+
         return permissionGranted;
     }
 

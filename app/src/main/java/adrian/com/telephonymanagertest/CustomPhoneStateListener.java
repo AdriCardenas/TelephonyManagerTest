@@ -5,7 +5,7 @@ import android.telephony.*;
 public class CustomPhoneStateListener extends PhoneStateListener {
     private final MainPhoneListener listener;
 
-    public CustomPhoneStateListener(MainPhoneListener listener){
+    public CustomPhoneStateListener(MainPhoneListener listener) {
         this.listener = listener;
     }
 

@@ -66,6 +66,7 @@ public class TelephonyService extends Service implements MainPhoneListener {
     private void sendMessage(String message, String eventName, String extraName) {
         Intent intent = new Intent(eventName);
         intent.putExtra(extraName, message);
+        Utils.appendLog(message + "\n");
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 }
