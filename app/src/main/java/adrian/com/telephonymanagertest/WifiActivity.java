@@ -5,10 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -19,10 +21,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class WifiActivity extends AppCompatActivity {
-    private WifiManager wifiManager;
-
     @BindView(R.id.recycler_view)
     RecyclerView mRecyclerView;
+
+    private WifiManager wifiManager;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
 
@@ -34,18 +36,16 @@ public class WifiActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        // specify an adapter (see also next example)
         mAdapter = new MyAdapter();
         mRecyclerView.setAdapter(mAdapter);
 
+        DividerItemDecoration itemDecor = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        mRecyclerView.addItemDecoration(itemDecor);
 
         wifiManager = (WifiManager)
                 getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -64,8 +64,7 @@ public class WifiActivity extends AppCompatActivity {
     BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent intent) {
-            boolean success = intent.getBooleanExtra(
-                    WifiManager.EXTRA_RESULTS_UPDATED, false);
+            boolean success = intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false);
             if (success) {
                 scanSuccess();
             } else {

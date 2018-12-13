@@ -2,16 +2,22 @@ package adrian.com.telephonymanagertest;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.telephony.CellLocation;
 import android.telephony.SignalStrength;
 import android.telephony.cdma.CdmaCellLocation;
@@ -22,7 +28,9 @@ import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class TelefonyActivity extends AppCompatActivity implements MainPhoneListener {
+public class TelefonyActivity extends AppCompatActivity {
+    @BindView(R.id.recycler_view)
+    RecyclerView mRecyclerView;
     @BindView(R.id.cell)
     TextView cellTv;
     @BindView(R.id.signal_strenght)
@@ -39,8 +47,6 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
     private static int REQUEST_WIFI_STATE = 105;
     private static int REQUEST_CHANGE_WIFI_STATE = 105;
 
-    Intent serviceIntent;
-
     public static final String SIGNAL_EVENT = "signal_event";
     public static final String STATE_EVENT = "state_event";
     public static final String LOCATION_EVENT = "location_event";
@@ -49,6 +55,10 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
     public static final String EXTRAS_LOCATION = "location";
     public static final String EXTRAS_SIGNAL = "signal";
 
+    private TelephonyService mService;
+    private boolean mBound;
+    private MyLogAdapter mAdapter;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +66,15 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
 
         ButterKnife.bind(this);
 
-        listenData();
+        mRecyclerView.setHasFixedSize(true);
+
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        mAdapter = new MyLogAdapter();
+        mRecyclerView.setAdapter(mAdapter);
+
+        DividerItemDecoration itemDecor = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        mRecyclerView.addItemDecoration(itemDecor);
     }
 
     @Override
@@ -76,18 +94,53 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
         super.onResume();
     }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            TelephonyService.LocalBinder binder = (TelephonyService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
+
+
     @Override
     protected void onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         super.onPause();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        listenData();
+    }
+
     private void listenData() {
         if (checkPermission()) {
-            serviceIntent = new Intent(TelefonyActivity.this, TelephonyService.class);
-            startService(serviceIntent);
+            Intent intent = new Intent(this, TelephonyService.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         }
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbind from the service
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -96,12 +149,18 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
                 if (intent.getAction().equals(SIGNAL_EVENT) && intent.getExtras() != null && intent.getExtras().containsKey(EXTRAS_SIGNAL)) {
                     String signal = intent.getStringExtra(EXTRAS_SIGNAL);
                     signalTv.setText(signal);
+                    mAdapter.addItem(signal);
+                    mAdapter.notifyDataSetChanged();
                 } else if (intent.getAction().equals(STATE_EVENT) && intent.getExtras() != null && intent.getExtras().containsKey(EXTRAS_STATE)) {
                     String state = intent.getStringExtra(EXTRAS_STATE);
                     serviceTv.setText(state);
+                    mAdapter.addItem(state);
+                    mAdapter.notifyDataSetChanged();
                 } else if (intent.getAction().equals(LOCATION_EVENT) && intent.getExtras() != null && intent.getExtras().containsKey(EXTRAS_LOCATION)) {
                     String location = intent.getStringExtra(EXTRAS_LOCATION);
                     cellTv.setText(location);
+                    mAdapter.addItem(location);
+                    mAdapter.notifyDataSetChanged();
                 }
             }
         }
@@ -152,25 +211,6 @@ public class TelefonyActivity extends AppCompatActivity implements MainPhoneList
         }
 
         return permissionGranted;
-    }
-
-    @Override
-    public void onSignalStrengthChanged(SignalStrength signalStrength) {
-        signalTv.setText(signalStrength.toString());
-    }
-
-    @Override
-    public void onServiceStateChanged(String state) {
-        serviceTv.setText(state);
-    }
-
-    @Override
-    public void onCellLocationChanged(CellLocation location) {
-        if (location instanceof GsmCellLocation) {
-            cellTv.setText("Lac: " + ((GsmCellLocation) location).toString() + ", Cid:" + ((GsmCellLocation) location).getCid());
-        } else if (location instanceof CdmaCellLocation) {
-            cellTv.setText("Lat:" + ((CdmaCellLocation) location).getBaseStationLatitude() + ", Long:" + ((CdmaCellLocation) location).getBaseStationLongitude());
-        }
     }
 
     @Override

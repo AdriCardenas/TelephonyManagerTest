@@ -3,6 +3,7 @@ package adrian.com.telephonymanagertest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -12,25 +13,34 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.telephony.cdma.CdmaCellLocation;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 
 public class TelephonyService extends Service implements MainPhoneListener {
     private static TelephonyManager tm;
     Runnable runnable = this::getTelephonyInfo;
 
+    private final IBinder mBinder = new LocalBinder();
+
+    public class LocalBinder extends Binder {
+        TelephonyService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return TelephonyService.this;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-
+        new Handler().post(runnable);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        new Handler().post(runnable);
         return START_STICKY;
     }
 
@@ -64,6 +74,7 @@ public class TelephonyService extends Service implements MainPhoneListener {
     }
 
     private void sendMessage(String message, String eventName, String extraName) {
+        Log.d("LOG1", message);
         Intent intent = new Intent(eventName);
         intent.putExtra(extraName, message);
         Utils.appendLog(message + "\n");

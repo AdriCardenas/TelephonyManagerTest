@@ -26,7 +26,9 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".TelephonyService" />
+        <service
+            android:name=".TelephonyService"
+            android:stopWithTask="false" />
 
         <activity android:name=".WifiActivity"></activity>
     </application>

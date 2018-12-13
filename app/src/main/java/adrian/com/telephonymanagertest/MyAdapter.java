@@ -14,10 +14,19 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     private List<ScanResult> mDataset;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-        public TextView mTextView;
+        public TextView wifiName;
+        public TextView wifiFreq;
+        public TextView wifiBssid;
+        public TextView wifiLevel;
+        public TextView wifiTimestamp;
+
         public MyViewHolder(View v) {
             super(v);
-            mTextView = v.findViewById(R.id.text);
+            wifiName = v.findViewById(R.id.wifi_name);
+            wifiFreq = v.findViewById(R.id.wifi_freq);
+            wifiBssid = v.findViewById(R.id.wifi_bssid);
+            wifiLevel = v.findViewById(R.id.wifi_level);
+            wifiTimestamp = v.findViewById(R.id.wifi_timestamp);
         }
     }
 
@@ -39,7 +48,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        holder.mTextView.setText(mDataset.get(position).toString());
+        holder.wifiName.setText("Wifi Name:" + mDataset.get(position).SSID);
+        holder.wifiFreq.setText("Frequency:" + Integer.toString(mDataset.get(position).frequency));
+        holder.wifiBssid.setText("Bssid:" + mDataset.get(position).BSSID);
+        holder.wifiLevel.setText("Level:" + Integer.toString(mDataset.get(position).level));
+        holder.wifiTimestamp.setText("Timestamp:" + Long.toString(mDataset.get(position).timestamp));
 
     }
 
